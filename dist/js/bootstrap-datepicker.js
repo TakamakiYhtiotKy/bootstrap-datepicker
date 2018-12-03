@@ -190,7 +190,7 @@
 
 			var format = DPGlobal.parseFormat(o.format);
 			if (o.startDate !== -Infinity){
-				if (!!o.startDate){
+				if (o.startDate){
 					if (o.startDate instanceof Date)
 						o.startDate = this._local_to_utc(this._zero_time(o.startDate));
 					else
@@ -201,7 +201,7 @@
 				}
 			}
 			if (o.endDate !== Infinity){
-				if (!!o.endDate){
+				if (o.endDate){
 					if (o.endDate instanceof Date)
 						o.endDate = this._local_to_utc(this._zero_time(o.endDate));
 					else
@@ -1381,16 +1381,20 @@
 			this.updating = true;
 
 			var dp = $(e.target).data('datepicker'),
-				new_date = dp.getUTCDate(),
+				new_date, // MOD value assignment moved below
 				i = $.inArray(e.target, this.inputs),
 				j = i - 1,
 				k = i + 1,
 				l = this.inputs.length;
+			if (isValidDate(dp.element[0].value)) { // MOD new_date value moved here
+				new_date = dp.getUTCDate();
+			}
 			if (i === -1)
 				return;
 
 			$.each(this.pickers, function(i, p){
-				if (!p.getUTCDate())
+				if (!p.getUTCDate() && p.element[0].value)
+				//if (!p.getUTCDate() && p.element[0].attributes['bothOrNoneRequired'].value === 'true') // MOD: jsruok 2016-10-27: copyDate restriction added
 					p.setUTCDate(new_date);
 			});
 
@@ -1409,6 +1413,11 @@
 			this.updateDates();
 
 			delete this.updating;
+
+			function isValidDate (input) { // MOD: has to match Finnish date format
+				var DATE_REGEX_DDMMYYYY_WITH_SEPARATOR = /^(?:(?:31(\/|-|\.)(?:0?[13578]|1[02]))\1|(?:(?:29|30)(\/|-|\.)(?:0?[1,3-9]|1[0-2])\2))(?:(?:1[6-9]|[2-9]\d)?\d{2})$|^(?:29(\/|-|\.)0?2\3(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00))))$|^(?:0?[1-9]|1\d|2[0-8])(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:(?:1[6-9]|[2-9]\d)\d{2})$/;
+				return input.match(DATE_REGEX_DDMMYYYY_WITH_SEPARATOR) !== null;
+			}
 		},
 		remove: function(){
 			$.map(this.pickers, function(p){ p.remove(); });
